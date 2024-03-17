@@ -4,7 +4,7 @@ A tool for collecting multiple distributed MAS Manage instance logs into a singl
 
 # Architecture
 
-![Image Description]("./arch.png")
+![Image Description](./arch.png)
 
 
 
