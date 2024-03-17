@@ -29,5 +29,5 @@ COPY --from=build /app/build .
 EXPOSE 3000
 
 # Start the Node.js server when the container starts
-CMD ["npx", "http-server", "-p", "3000"]
+CMD ["npm", "run", "watch"]
 

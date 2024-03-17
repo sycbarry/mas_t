@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mastelemetry-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mastelemetry-client
+  template:
+    metadata:
+      labels:
+        app: mastelemetry-client
+    spec:
+      containers:
+      - name: mastelemetry-client
+        image: <IMAGEHERE>:latest
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        volumeMounts: 
+      - name: config-volume
+        mountPath: /app/config
+      - name: secret-volume
+        mountPath: /app/secret
+      volumes: 
+        - name: config-volume
+          configMap: 
+          name: mastelemetry-configmap
+        - name: secret-volume
+          secret: 
+            secretName: mastelemetry-secret
+        
+

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastelemetry-configmap
+data:
+  config.yaml: |
+    websocket:
+      server: ws://<host>/ws
+
+    authentication:
+      username: <username>
+      password: <password>
+
+    maximo_instance:
+      name: <managepodinstance>
+
