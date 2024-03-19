@@ -7,11 +7,11 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      - hub
 
-  backend:
+  hub:
     build:
-      context: ./backend
+      context: ./hub
       dockerfile: Dockerfile
     ports:
       - "8080:8080"

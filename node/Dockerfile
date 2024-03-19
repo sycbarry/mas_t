@@ -28,7 +28,9 @@ COPY --from=builder /app/app .
 
 # Expose port 8080 to the outside world
 EXPOSE 8080
+EXPOSE 80 
+EXPOSE 443
 
 # Command to run the executable
-CMD ["./app"]
+# CMD ["./app"]
 

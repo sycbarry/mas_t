@@ -1,11 +1,21 @@
-FROM maven:3.6.3 AS maven
-WORKDIR /usr/src/app
-COPY . /usr/src/app
-RUN mvn package
-FROM openjdk:8-jdk-alpine
-ARG JAR_FILE=backend-0.0.1.jar
-WORKDIR /opt/app
-COPY --from=maven /usr/src/app/target/${JAR_FILE} /opt/app/
-#COPY ./src/main/resources/static/images/* /opt/app/
+# Use a base image with Maven and OpenJDK 17 installed
+FROM maven:3.8.4-openjdk-17 AS build
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the Maven project's source code into the container
+COPY . .
+
+# Build the Maven project
+RUN mvn clean package
+
+# Use a lightweight base image to run the application
+FROM openjdk:17-jdk-alpine
+
+# Set the working directory inside the container
+WORKDIR /app
+
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","${JAR_FILE}.jar"]
+
+ENTRYPOINT ["mvnw" , "spring-boot:run"]
