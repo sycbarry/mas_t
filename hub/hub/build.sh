@@ -1,5 +1,5 @@
 
 #!/bin/bash
 
-./mvwn spring-boot:install
-./mvnw spring-boot:run
+mvwn spring-boot:install
+mvnw spring-boot:run

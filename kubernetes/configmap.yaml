@@ -4,13 +4,8 @@ metadata:
   name: mastelemetry-configmap
 data:
   config.yaml: |
-    websocket:
-      server: ws://<host>/ws
-
-    authentication:
-      username: <username>
-      password: <password>
-
-    maximo_instance:
-      name: <managepodinstance>
+    server: ws://<host>/ws
+    username: <username>
+    password: <password>
+    name: <managepodinstance>
 

@@ -2,20 +2,34 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"node/cmd/node"
 	client "node/cmd/client"
-	"time"
-)
+    "os"
 
+    "github.com/joho/godotenv"
+)
 
 
 
 func main() {
 
-    wsURL := "ws://localhost:8080/ws"
-    clientPassword := "password"
-    clientUsername := "client"
+    err := godotenv.Load()
+    if err != nil {
+        panic(err)
+    }
+
+
+    wsURL := os.Getenv("WSHUB")
+    clientPassword := os.Getenv("WSCLIENTPASSWORD")
+    clientUsername := os.Getenv("WSCLIENTUSERNAME")
+
+    masClient := &node.MASClient{}
+    masClient.Username = os.Getenv("MASCLIENTUSERNAME")
+    masClient.Password = os.Getenv("MASCLIENTPASSWORD")
+    masClient.Host = os.Getenv("MASCLIENTHOST")
+    masClient.PodName = os.Getenv("MASCLIENTPODNAME")
+    masClient.ContainerName = os.Getenv("MASCLIENTCONTAINERNAME")
+    masClient.Namespace = os.Getenv("MASCLIENTNAMESPACE")
 
     client := &client.Client{
         Username: clientUsername,
@@ -26,18 +40,13 @@ func main() {
     connection := client.Build()
     defer connection.Disconnect()
 
-    masClient := &node.MASClient{}
-    masClient.PodName = "zingg-api-6bc8d96d7-jzcmh"
-    masClient.Namespace = "zingg"
-
     c := make(chan node.LogMessage)
-
     go masClient.ReadLogs(c)
 
     for {
         x := <-c
-        rand.Seed(time.Now().UnixNano())
         connection.Send("/app/log", "text/plain", []byte(fmt.Sprintf("%v", x)), nil)
     }
+
 }
 
