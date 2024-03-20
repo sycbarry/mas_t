@@ -7,6 +7,7 @@ import (
 
     "strings"
     "io/ioutil"
+    "io"
     "fmt"
 
 
@@ -14,6 +15,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type MASClient struct {
@@ -23,10 +25,41 @@ type MASClient struct {
     Username string 
     Password string 
     Host string
-    ContainerName string
+    Config *rest.Config
 }
 
-func (client *MASClient) ReadLogs(c chan LogMessage) {
+func containsSubstring(s string, substrings []string) bool {
+    for _, substr := range substrings {
+        if strings.Contains(s, substr) && ! strings.Contains(s, "build") {
+            return true;
+        }
+    }
+    return false;
+}
+
+func (client *MASClient) ListBindablePods() ([]string, error) {
+    clientset, err := kubernetes.NewForConfig(client.Config)
+    if err != nil {
+        panic(err.Error())
+    }
+    podList, err := clientset.CoreV1().Pods(client.Namespace).List(context.Background(), metav1.ListOptions{})
+    if err != nil {
+        panic(err.Error())
+    }
+
+    substrings := []string{"mea", "jms", "ui", "mxinst", "cron", "rpt"}
+    var podClients []string
+
+    for _, pod := range podList.Items {
+        if containsSubstring(pod.GetName(), substrings) {
+            podClients = append(podClients, pod.GetName())
+        }
+    }
+
+    return podClients, nil
+}
+
+func (client *MASClient) BuildConfig() {
     config, err := rest.InClusterConfig()
     if err != nil {
         if(client.ConfigPath != "" ) {
@@ -46,24 +79,34 @@ func (client *MASClient) ReadLogs(c chan LogMessage) {
             }
         }
     }
+    client.Config = config;
+}
 
-    clientset, err := kubernetes.NewForConfig(config)
+func (client *MASClient) ReadLogs(c chan LogMessage) {
+
+    clientset, err := kubernetes.NewForConfig(client.Config)
     if err != nil {
         panic(err.Error())
     }
 
-
-    /*
-    _, err := getToken(clientset, client.Username, client.Password, client.Host)
+    pod, err := clientset.CoreV1().Pods(client.Namespace).Get(context.Background(), client.PodName, metav1.GetOptions{})
     if err != nil {
         panic(err.Error())
     }
-    */
 
-    // config.BearerToken = token
+    var container string;
+    var podLogs io.ReadCloser
+
+    if len(pod.Spec.Containers) > 0{
+        container = pod.Spec.Containers[0].Name
+        podLogs, err = clientset.CoreV1().Pods(client.Namespace).GetLogs(client.PodName, &v1.PodLogOptions{Follow: true, Container: container}).Stream(context.Background())
+    } else {
+        podLogs, err = clientset.CoreV1().Pods(client.Namespace).GetLogs(client.PodName, &v1.PodLogOptions{Follow: true}).Stream(context.Background())
+    }
+
+    fmt.Println(client.PodName);
 
 
-    podLogs, err := clientset.CoreV1().Pods(client.Namespace).GetLogs(client.PodName, &v1.PodLogOptions{Follow: true, Container: client.ContainerName}).Stream(context.Background())
     if err != nil {
         panic(err.Error())
     }

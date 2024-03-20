@@ -15,7 +15,7 @@ export default function Node() {
     
     return (
         <>
-            <div className="socket-header">Viewing Messages For: {getClientName()}</div>
+            <div className="socket-header">Viewing Logs For: {getClientName().split("/").pop()}</div>
             <div id="messages" style={{display: "flex", flexFlow: "column"}}> </div>
             <div style={{ margin: "20px"}}>
              <Oval

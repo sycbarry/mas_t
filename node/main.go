@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"node/cmd/node"
+    "sync"
 	client "node/cmd/client"
     "os"
 
@@ -18,18 +19,22 @@ func main() {
         panic(err)
     }
 
-
     wsURL := os.Getenv("WSHUB")
     clientPassword := os.Getenv("WSCLIENTPASSWORD")
     clientUsername := os.Getenv("WSCLIENTUSERNAME")
 
-    masClient := &node.MASClient{}
-    masClient.Username = os.Getenv("MASCLIENTUSERNAME")
-    masClient.Password = os.Getenv("MASCLIENTPASSWORD")
-    masClient.Host = os.Getenv("MASCLIENTHOST")
-    masClient.PodName = os.Getenv("MASCLIENTPODNAME")
-    masClient.ContainerName = os.Getenv("MASCLIENTCONTAINERNAME")
-    masClient.Namespace = os.Getenv("MASCLIENTNAMESPACE")
+    ocClient := &node.MASClient{}
+    ocClient.Username = os.Getenv("MASCLIENTUSERNAME")
+    ocClient.Password = os.Getenv("MASCLIENTPASSWORD")
+    ocClient.Host = os.Getenv("MASCLIENTHOST")
+    ocClient.Namespace = os.Getenv("MASCLIENTNAMESPACE")
+
+
+    ocClient.BuildConfig()
+    podClients, err := ocClient.ListBindablePods()
+    if err != nil {
+        panic(err.Error())
+    }
 
     client := &client.Client{
         Username: clientUsername,
@@ -37,16 +42,37 @@ func main() {
         Endpoint: wsURL,
     }
 
-    connection := client.Build()
-    defer connection.Disconnect()
+    var wg sync.WaitGroup;
 
-    c := make(chan node.LogMessage)
-    go masClient.ReadLogs(c)
+    for _, podName := range(podClients) {
 
-    for {
-        x := <-c
-        connection.Send("/app/log", "text/plain", []byte(fmt.Sprintf("%v", x)), nil)
+        wg.Add(1)
+
+        go func(pod string) {
+
+
+            masClient := &node.MASClient{}
+            masClient.Username = os.Getenv("MASCLIENTUSERNAME")
+            masClient.Password = os.Getenv("MASCLIENTPASSWORD")
+            masClient.Host = os.Getenv("MASCLIENTHOST")
+            masClient.Namespace = os.Getenv("MASCLIENTNAMESPACE")
+            masClient.PodName = pod
+            masClient.BuildConfig()
+            connection := client.Build()
+            defer connection.Disconnect()
+            c := make(chan node.LogMessage)
+            go masClient.ReadLogs(c)
+            for {
+                x := <-c
+                connection.Send("/app/log/" + podName, "text/plain", []byte(fmt.Sprintf("%v", x)), nil)
+            }
+
+            wg.Done()
+
+        }(podName)
     }
+
+    wg.Wait()
 
 }
 

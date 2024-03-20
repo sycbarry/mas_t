@@ -24,7 +24,7 @@ function App() {
     return (
         <div className="App">
             <div className="container">
-            <div style={{fontWeight: "bold", marginBottom: "20px"}}>Connected Instances</div>
+            <div style={{fontWeight: "bold", marginBottom: "20px"}}>Connected MAS Cluster Clients</div>
             { 
                 clients.length == 0 ? 
                  <Oval
@@ -38,7 +38,7 @@ function App() {
                   /> : 
                 Object.keys(clients).map(key => 
                     <div key={clients[key]} style={{marginBottom: "10px"}}>
-                    <a href={"/node?node=" + clients[key].nodeName} >{clients[key].nodeName}</a>
+                    <a href={"/topics?name=" + clients[key].nodeName} >{clients[key].nodeName}</a>
                     </div>
                 ) 
             }
