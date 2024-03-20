@@ -8,6 +8,8 @@ services:
       - "3000:3000"
     depends_on:
       - hub
+    networks:
+        - main 
 
   hub:
     build:
@@ -15,4 +17,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    networks:
+        - main 
 
+networks:
+  main: 
+    driver: bridge
