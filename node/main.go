@@ -47,9 +47,26 @@ func main() {
     for _, podName := range(podClients) {
 
         wg.Add(1)
+        masClient := &node.MASClient{}
+        masClient.Username = os.Getenv("MASCLIENTUSERNAME")
+        masClient.Password = os.Getenv("MASCLIENTPASSWORD")
+        masClient.Host = os.Getenv("MASCLIENTHOST")
+        masClient.Namespace = os.Getenv("MASCLIENTNAMESPACE")
+        masClient.PodName = podName
+        masClient.BuildConfig()
+        connection := client.Build()
+        defer connection.Disconnect()
+        c := make(chan node.LogMessage)
+        go masClient.ReadLogs(c)
+        for {
+            x := <-c
+            connection.Send("/app/log/" + podName, "text/plain", []byte(fmt.Sprintf("%v", x)), nil)
+        }
 
+        wg.Done()
+
+        /*
         go func(pod string) {
-
 
             masClient := &node.MASClient{}
             masClient.Username = os.Getenv("MASCLIENTUSERNAME")
@@ -70,6 +87,7 @@ func main() {
             wg.Done()
 
         }(podName)
+        */
     }
 
     wg.Wait()

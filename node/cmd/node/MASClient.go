@@ -96,12 +96,13 @@ func (client *MASClient) ReadLogs(c chan LogMessage) {
 
     var container string;
     var podLogs io.ReadCloser
+    var seconds int64 = 10;
 
     if len(pod.Spec.Containers) > 0{
         container = pod.Spec.Containers[0].Name
-        podLogs, err = clientset.CoreV1().Pods(client.Namespace).GetLogs(client.PodName, &v1.PodLogOptions{Follow: true, Container: container}).Stream(context.Background())
+        podLogs, err = clientset.CoreV1().Pods(client.Namespace).GetLogs(client.PodName, &v1.PodLogOptions{ Follow: true, Container: container, Timestamps: true, SinceSeconds: &seconds }).Stream(context.Background())
     } else {
-        podLogs, err = clientset.CoreV1().Pods(client.Namespace).GetLogs(client.PodName, &v1.PodLogOptions{Follow: true}).Stream(context.Background())
+        podLogs, err = clientset.CoreV1().Pods(client.Namespace).GetLogs(client.PodName, &v1.PodLogOptions{ Follow: true, Timestamps: true, SinceSeconds: &seconds }).Stream(context.Background())
     }
 
     fmt.Println(client.PodName);
@@ -112,8 +113,8 @@ func (client *MASClient) ReadLogs(c chan LogMessage) {
     }
     defer podLogs.Close()
 
-    buf := make([]byte, 1024)
-    counter := 0; 
+    buf := make([]byte, 2048)
+    counter := 0;
     for {
         n, _ := podLogs.Read(buf)
         if n == 0 {
